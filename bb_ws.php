@@ -1,7 +1,7 @@
 <?php
 /*
  *  bb_ws-php - An example script accessing the Blackboard Learn 9 web services using PHP
- *  Copyright (C) 2013  Stephen P Vickers
+ *  Copyright (C) 2016  Stephen P Vickers
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -23,6 +23,9 @@
  *   1.0.0  10-Feb-13  Initial version
  *   1.1.0  27-Apr-13  Added members option to retrieve course memberships
  *                     Allow course and user options to list multiple IDs
+ *   1.2.0   7-Apr-16  Added option to allow self-signed SSL certificates
+ *                     Fixed bug with courses option when a user has only one membership
+ *                     Added role ID to member option output
 */
 
 // Load configuration settings
@@ -41,8 +44,20 @@
   if ($ok) {
 
 // Initialise a Context SOAP client object
+    $options = array();
+    if (defined('VERIFY_SSL') && !VERIFY_SSL) {
+      $options['stream_context'] = stream_context_create(
+        array(
+          'ssl' => array(
+            'verify_peer' => false,
+            'verify_peer_name' => false,
+            'allow_self_signed' => true,
+          )
+        )
+      );
+    }
     try {
-      $context_client = new BbSoapClient(SERVER_URL . '/webapps/ws/services/Context.WS?wsdl');
+      $context_client = new BbSoapClient(SERVER_URL . '/webapps/ws/services/Context.WS?wsdl', $options);
     } catch (Exception $e) {
       $ok = FALSE;
       print "ERROR: {$e->getMessage()}\n";
@@ -122,9 +137,14 @@
             $member = new stdClass();
             $member->userid = $argv[2];
             try {
-              $result = $context_client->getMemberships($member);
-              for ($i = 0; $i < count($result->return); $i++) {
-                print " {$result->return[$i]->externalId}";
+              $results = $context_client->getMemberships($member);
+              $courses = $results->return;
+              if (!is_array($courses)) {
+                $courses = array();
+                $courses[] = $results->return;
+              }
+              for ($i = 0; $i < count($courses); $i++) {
+                print " {$courses[$i]->externalId}";
               }
               print "\n";
             } catch (Exception $e) {
@@ -143,7 +163,7 @@
           if ($ok) {
 // Initialise a Course SOAP client object
             try {
-              $course_client = new BbSoapClient(SERVER_URL . '/webapps/ws/services/Course.WS?wsdl');
+              $course_client = new BbSoapClient(SERVER_URL . '/webapps/ws/services/Course.WS?wsdl', $options);
             } catch (Exception $e) {
               $ok = FALSE;
               print "ERROR: {$e->getMessage()}\n";
@@ -202,7 +222,7 @@
           if ($ok) {
 // Initialise a User SOAP client object
             try {
-              $user_client = new BbSoapClient(SERVER_URL . '/webapps/ws/services/User.WS?wsdl');
+              $user_client = new BbSoapClient(SERVER_URL . '/webapps/ws/services/User.WS?wsdl', $options);
             } catch (Exception $e) {
               $ok = FALSE;
               print "ERROR: {$e->getMessage()}\n";
@@ -261,7 +281,7 @@
           if ($ok) {
 // Initialise a User SOAP client object
             try {
-              $membership_client = new BbSoapClient(SERVER_URL . '/webapps/ws/services/CourseMembership.WS?wsdl');
+              $membership_client = new BbSoapClient(SERVER_URL . '/webapps/ws/services/CourseMembership.WS?wsdl', $options);
             } catch (Exception $e) {
               $ok = FALSE;
               print "ERROR: {$e->getMessage()}\n";
@@ -297,7 +317,7 @@
                 }
                 for ($i = 0; $i < count($memberships); $i++) {
                   $result = $memberships[$i];
-                  print "  {$result->id}: userId {$result->userId}, enrolled " . date('d-M-y H:i:s', $result->enrollmentDate) . ' (';
+                  print "  {$result->id}: userId {$result->userId}, roleId {$result->roleId}, enrolled " . date('d-M-y H:i:s', $result->enrollmentDate) . ' (';
                   if (!$result->available) {
                     print 'not ';
                   }

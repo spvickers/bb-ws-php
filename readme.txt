@@ -24,6 +24,7 @@ Using the example script:
        php bb_ws.php member _2_1 (membership details by courseId)
        php bb_ws.php member _2_1 _1_1 (membership details by courseId by userId, more than one userId can be passed)
 
+If you are trying to connect to a Learn 9 server with a self-signed SSL certificate, change the value of the VERIFY_SSL constant in config.php to FALSE.
 
 Stephen P Vickers
-27 April 2013
+7 April 2016
