@@ -19,15 +19,20 @@ These files are provided as-is to provide a simple illustration of one way in wh
 6.  The other options should now work; for example:
 ```
        php bb_ws.php courses administrator (list of courses for a user)
-       php bb_ws.php course _2_1 (course details by id)
-       php bb_ws.php course cid (course details by courseId)
-       php bb_ws.php user _1_1 (user details by id)
-       php bb_ws.php user administrator (user details by username)
+       php bb_ws.php course _2_1 (course details by id, more than one id can be passed)
+       php bb_ws.php course cid (course details by courseId, more than one courseId can be passed)
+       php bb_ws.php user _1_1 (user details by id, more than one userId can be passed)
+       php bb_ws.php user administrator (user details by username, more than one username can be passed)
+       php bb_ws.php member _2_1 (membership details by courseId)
+       php bb_ws.php member _2_1 _1_1 (membership details by courseId by userId, more than one userId can be passed)
 ```
 
 ## Version history:
 
-* 1.0.0  10-Feb-13  Initial version
+* 1.0.00  10-Feb-13  Initial version
+* 1.1.00  27-Apr-13
+  * Added members option to retrieve course memberships
+  * Allow course and user options to list multiple IDs
 
 ## Licence
 

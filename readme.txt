@@ -17,11 +17,13 @@ Using the example script:
 5.  Make the tool available in Learn 9 (see Administrator Panel > Building Blocks > Proxy Tools page).
 6.  The other options should now work; for example:
        php bb_ws.php courses administrator (list of courses for a user)
-       php bb_ws.php course _2_1 (course details by id)
-       php bb_ws.php course cid (course details by courseId)
-       php bb_ws.php user _1_1 (user details by id)
-       php bb_ws.php user administrator (user details by username)
+       php bb_ws.php course _2_1 (course details by id, more than one id can be passed)
+       php bb_ws.php course cid (course details by courseId, more than one courseId can be passed)
+       php bb_ws.php user _1_1 (user details by id, more than one userId can be passed)
+       php bb_ws.php user administrator (user details by username, more than one username can be passed)
+       php bb_ws.php member _2_1 (membership details by courseId)
+       php bb_ws.php member _2_1 _1_1 (membership details by courseId by userId, more than one userId can be passed)
 
 
 Stephen P Vickers
-10 February 2013
+27 April 2013

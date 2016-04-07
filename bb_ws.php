@@ -21,6 +21,8 @@
  *
  * Version history:
  *   1.0.0  10-Feb-13  Initial version
+ *   1.1.0  27-Apr-13  Added members option to retrieve course memberships
+ *                     Allow course and user options to list multiple IDs
 */
 
 // Load configuration settings
@@ -63,7 +65,8 @@
       $register_tool->registrationPassword = REGISTRATION_PASSWORD;
       $register_tool->description = TOOL_DESCRIPTION;
       $register_tool->initialSharedSecret = SHARED_SECRET;
-      $register_tool->requiredToolMethods =   array('Context.WS:loginTool', 'Context.WS:getMemberships', 'User.WS:getUser', 'Course.WS:getCourse');
+      $register_tool->requiredToolMethods =   array('Context.WS:loginTool', 'Context.WS:getMemberships', 'User.WS:getUser', 'Course.WS:getCourse',
+                                                    'CourseMembership.WS:getCourseMembership');
       try {
         $result = $context_client->registerTool($register_tool);
         $ok = $result->return->status;
@@ -148,25 +151,37 @@
           }
 
           if ($ok) {
-            print 'Retrieving course... ';
+            print 'Retrieving course(s)... ';
+            $ids = array();
+            for ($i = 2; $i < $argc; $i++) {
+              $ids[] = $argv[$i];
+            }
             $course = new stdClass();
             $course->filter = new stdClass();
             if (substr($argv[2], 0, 1) == '_') {
-              $course->filter->ids = array($argv[2]);
+              $course->filter->ids = $ids;
               $course->filter->filterType = 3;
             } else {
-              $course->filter->courseIds = array($argv[2]);
+              $course->filter->courseIds = $ids;
               $course->filter->filterType = 1;
             }
             try {
-              $result = $course_client->getCourse($course);
-              $ok = $result->return;
+              $results = $course_client->getCourse($course);
+              $ok = $results->return;
               if ($ok) {
-                print "{$result->return->name} ";
-                if ($course->filter->filterType == 3) {
-                  print "({$result->return->courseId})\n";
-                } else {
-                  print "({$result->return->id})\n";
+                print "\n";
+                $courses = $results->return;
+                if (!is_array($courses)) {
+                  $courses = array();
+                  $courses[] = $results->return;
+                }
+                for ($i = 0; $i < count($courses); $i++) {
+                  $result = $courses[$i];
+                  if ($course->filter->filterType == 3) {
+                    print "  {$result->id}: {$result->name} ({$result->courseId})\n";
+                  } else {
+                    print "  {$result->courseId}: {$result->name} ({$result->id})\n";
+                  }
                 }
               } else {
                 $err = TRUE;
@@ -195,25 +210,98 @@
           }
 
           if ($ok) {
-            print 'Retrieving user... ';
+            print 'Retrieving user(s)... ';
+            $ids = array();
+            for ($i = 2; $i < $argc; $i++) {
+              $ids[] = $argv[$i];
+            }
             $user = new stdClass();
             $user->filter = new stdClass();
             if (substr($argv[2], 0, 1) == '_') {
-              $user->filter->id = array($argv[2]);
+              $user->filter->id = $ids;
               $user->filter->filterType = 2;
             } else {
-              $user->filter->name = array($argv[2]);
+              $user->filter->name = $ids;
               $user->filter->filterType = 6;
             }
             try {
-              $result = $user_client->getUser($user);
-              $ok = $result->return;
+              $results = $user_client->getUser($user);
+              $ok = $results->return;
               if ($ok) {
-                print "{$result->return->extendedInfo->givenName} {$result->return->extendedInfo->familyName} ";
-                if ($user->filter->filterType == 2) {
-                  print "({$result->return->name})\n";
-                } else {
-                  print "({$result->return->id})\n";
+                $users = $results->return;
+                print "\n";
+                if (!is_array($users)) {
+                  $users = array();
+                  $users[] = $results->return;
+                }
+                for ($i = 0; $i < count($users); $i++) {
+                  $result = $users[$i];
+                  if ($user->filter->filterType == 2) {
+                    print "  {$result->id}: {$result->extendedInfo->givenName} {$result->extendedInfo->familyName} ({$result->name})\n";
+                  } else {
+                    print "  {$result->name}: {$result->extendedInfo->givenName} {$result->extendedInfo->familyName} ({$result->id})\n";
+                  }
+                }
+              } else {
+                $err = TRUE;
+                print "not found\n";
+              }
+            } catch (Exception $e) {
+              $err = TRUE;
+              print "ERROR: {$e->getMessage()}\n";
+            }
+          }
+
+        } else if ($action == 'member') {
+##
+#### Get course membership details
+##
+          $ok = isset($argv[2]);
+
+          if ($ok) {
+// Initialise a User SOAP client object
+            try {
+              $membership_client = new BbSoapClient(SERVER_URL . '/webapps/ws/services/CourseMembership.WS?wsdl');
+            } catch (Exception $e) {
+              $ok = FALSE;
+              print "ERROR: {$e->getMessage()}\n";
+            }
+          }
+
+          if ($ok) {
+            print 'Retrieving membership(s)... ';
+            $course = new stdClass();
+            $course->courseId = $argv[2];
+            $ids = array();
+            if ($argc >= 4) {
+              for ($i = 3; $i < $argc; $i++) {
+                $ids[] = $argv[$i];
+              }
+            } else {
+              $ids[] = '';
+            }
+            $member = new stdClass();
+            $member->courseId = $argv[2];
+            $member->f = new stdClass();
+            $member->f->userIds = $ids;
+            $member->f->filterType = 6;
+            try {
+              $results = $membership_client->getCourseMembership($member);
+              $ok = $results->return;
+              if ($ok) {
+                $memberships = $results->return;
+                print "\n";
+                if (!is_array($memberships)) {
+                  $memberships = array();
+                  $memberships[] = $results->return;
+                }
+                for ($i = 0; $i < count($memberships); $i++) {
+                  $result = $memberships[$i];
+                  print "  {$result->id}: userId {$result->userId}, enrolled " . date('d-M-y H:i:s', $result->enrollmentDate) . ' (';
+                  if (!$result->available) {
+                    print 'not ';
+                  }
+                  print "available)\n";
                 }
               } else {
                 $err = TRUE;
@@ -242,10 +330,11 @@
 #### Display usage information
 ##
     print "Usage:\n";
-    print "  {$argv[0]} register            -- register the proxy tool\n";
-    print "  {$argv[0]} courses {username}  -- retrieve a list of courses for a user\n";
-    print "  {$argv[0]} course {course}     -- retrieve details of a course (id/courseId)\n";
-    print "  {$argv[0]} user {user}         -- retrieve details of a user (id/username)\n";
+    print "  {$argv[0]} register                    -- register the proxy tool\n";
+    print "  {$argv[0]} courses {username}          -- get course list for a user\n";
+    print "  {$argv[0]} course {course}+            -- get course details (id/courseId)\n";
+    print "  {$argv[0]} user {user}+                -- get user details (id/username)\n";
+    print "  {$argv[0]} member {courseId} {userId}* -- get course membership details\n";
 
   }
 
