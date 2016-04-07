@@ -26,7 +26,7 @@
 
   define('SERVER_URL', 'http://learn9.server.edu');   // URL to Learn 9 server (without a closing "/")
   define('REGISTRATION_PASSWORD', '');  // Proxy Tool registration password for Learn 9 server
-  define('VERIFY_SSL', FALSE);  // Whether to verify SSL certificates (set to FALSE to allow access to a server with a self-signed certificate)
+  define('VERIFY_SSL', TRUE);  // Whether to verify SSL certificates (set to FALSE to allow access to a server with a self-signed certificate)
 
   define('VENDOR_ID', 'osc');
   define('PROGRAM_ID', 'ws-sample-php');
