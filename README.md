@@ -29,10 +29,14 @@ These files are provided as-is to provide a simple illustration of one way in wh
 
 ## Version history:
 
-* 1.0.00  10-Feb-13  Initial version
-* 1.1.00  27-Apr-13
+* 1.0.0  10-Feb-13  Initial version
+* 1.1.0  27-Apr-13
   * Added members option to retrieve course memberships
   * Allow course and user options to list multiple IDs
+* 1.2.0   7-Apr-16
+  * Added option to allow self-signed SSL certificates
+  * Fixed bug with courses option when a user has only one membership
+  * Added role ID to member option output
 
 ## Licence
 
